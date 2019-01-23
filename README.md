@@ -1,3 +1,14 @@
+# Prototypical networks test
+
+What if we use ImageNet pretrained model as base embedding model?
+
+Here's tested.
+
+* Depending on one additional module: dl-cliche.
+
+- - -
+Original readme document.
+
 # Few-shot learning
 
 The aim for this repository is to contain clean, readable and tested
