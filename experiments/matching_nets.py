@@ -67,7 +67,7 @@ model = MatchingNetwork(args.n_train, args.k_train, args.q_train, args.fce, num_
                         lstm_input_size=lstm_input_size,
                         unrolling_steps=args.unrolling_steps,
                         device=device)
-model.to(device, dtype=torch.double)
+model.to(device, dtype=torch.float)
 
 
 ###################

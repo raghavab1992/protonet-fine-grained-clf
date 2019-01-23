@@ -46,7 +46,7 @@ class TestMatchingNets(unittest.TestCase):
         y_pred_sum = y_pred.sum(dim=1)
         self.assertTrue(
             torch.all(
-                torch.isclose(y_pred_sum, torch.ones_like(y_pred_sum).double())
+                torch.isclose(y_pred_sum, torch.ones_like(y_pred_sum).float())
             ),
             'Matching Network predictions probabilities must sum to 1 for each '
             'query sample.'

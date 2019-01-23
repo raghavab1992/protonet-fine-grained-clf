@@ -14,11 +14,11 @@ class TestDistance(unittest.TestCase):
         k = 3  # 3 way classification
         d = 2  # embedding dimension of two
 
-        query = torch.zeros([q * k, d], dtype=torch.double)
+        query = torch.zeros([q * k, d], dtype=torch.float)
         query[0] = torch.Tensor([0, 0])
         query[1] = torch.Tensor([0, 1])
         query[2] = torch.Tensor([1, 0])
-        support = torch.zeros([k, d], dtype=torch.double)
+        support = torch.zeros([k, d], dtype=torch.float)
         support[0] = torch.Tensor([1, 1])
         support[1] = torch.Tensor([1, 2])
         support[2] = torch.Tensor([2, 2])
@@ -43,11 +43,11 @@ class TestDistance(unittest.TestCase):
         q = 1  # 1 query per class
         k = 3  # 3 way classification
         d = 2  # embedding dimension of two
-        query = torch.zeros([q * k, d], dtype=torch.double)
+        query = torch.zeros([q * k, d], dtype=torch.float)
         query[0] = torch.Tensor([1, 0])
         query[1] = torch.Tensor([0, 1])
         query[2] = torch.Tensor([1, 1])
-        support = torch.zeros([k, d], dtype=torch.double)
+        support = torch.zeros([k, d], dtype=torch.float)
         support[0] = torch.Tensor([1, 1])
         support[1] = torch.Tensor([-1, -1])
         support[2] = torch.Tensor([0, 2])
@@ -71,11 +71,11 @@ class TestDistance(unittest.TestCase):
         q = 1  # 1 query per class
         k = 3  # 3 way classification
         d = 2  # embedding dimension of two
-        query = torch.zeros([q * k, d], dtype=torch.double)
+        query = torch.zeros([q * k, d], dtype=torch.float)
         query[0] = torch.Tensor([0, 0])  # First query sample is all zeros
         query[1] = torch.Tensor([0, 1])
         query[2] = torch.Tensor([1, 1])
-        support = torch.zeros([k, d], dtype=torch.double)
+        support = torch.zeros([k, d], dtype=torch.float)
         support[0] = torch.Tensor([1, 1])
         support[1] = torch.Tensor([-1, -1])
         support[2] = torch.Tensor([0, 0])  # Third support sample is all zeros

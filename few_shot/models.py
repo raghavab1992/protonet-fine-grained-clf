@@ -163,8 +163,8 @@ class MatchingNetwork(nn.Module):
         self.num_input_channels = num_input_channels
         self.encoder = get_few_shot_encoder(self.num_input_channels)
         if self.fce:
-            self.g = BidrectionalLSTM(lstm_input_size, lstm_layers).to(device, dtype=torch.double)
-            self.f = AttentionLSTM(lstm_input_size, unrolling_steps=unrolling_steps).to(device, dtype=torch.double)
+            self.g = BidrectionalLSTM(lstm_input_size, lstm_layers).to(device, dtype=torch.float)
+            self.f = AttentionLSTM(lstm_input_size, unrolling_steps=unrolling_steps).to(device, dtype=torch.float)
 
     def forward(self, inputs):
         pass
@@ -227,8 +227,8 @@ class AttentionLSTM(nn.Module):
         batch_size = queries.shape[0]
         embedding_dim = queries.shape[1]
 
-        h_hat = torch.zeros_like(queries).cuda().double()
-        c = torch.zeros(batch_size, embedding_dim).cuda().double()
+        h_hat = torch.zeros_like(queries).cuda().float()
+        c = torch.zeros(batch_size, embedding_dim).cuda().float()
 
         for k in range(self.unrolling_steps):
             # Calculate hidden state cf. equation (4) of appendix A.2

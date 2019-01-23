@@ -39,7 +39,7 @@ class TestMAML(unittest.TestCase):
             cls.dummy, batch_sampler=NShotTaskSampler(cls.dummy, cls.meta_batch_size, n=cls.n, k=cls.k, q=cls.q, num_tasks=1),
         )
 
-        cls.model = DummyModel(cls.k).double()
+        cls.model = DummyModel(cls.k).float()
         cls.opt = torch.optim.Adam(cls.model.parameters(), lr=0.001)
 
     def _get_maml_graph(self, order: int, inner_train_steps: int) -> Tuple[
@@ -59,7 +59,7 @@ class TestMAML(unittest.TestCase):
             edges: List of (Function, Function) tuples that are the edges between the nodes of the autograd graph
         """
         x, _ = self.dummy_tasks.__iter__().__next__()
-        x = x.double().reshape(self.meta_batch_size, self.n * self.k + self.q * self.k, x.shape[-1])
+        x = x.float().reshape(self.meta_batch_size, self.n * self.k + self.q * self.k, x.shape[-1])
         y = create_nshot_task_label(self.k, self.q).repeat(self.meta_batch_size)
 
         loss, y_pred = meta_gradient_step(self.model, self.opt, torch.nn.CrossEntropyLoss(), x, y, self.n, self.k,

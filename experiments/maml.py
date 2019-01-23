@@ -80,7 +80,7 @@ evaluation_taskloader = DataLoader(
 # Training #
 ############
 print(f'Training MAML on {args.dataset}...')
-meta_model = FewShotClassifier(num_input_channels, args.k, fc_layer_size).to(device, dtype=torch.double)
+meta_model = FewShotClassifier(num_input_channels, args.k, fc_layer_size).to(device, dtype=torch.float)
 meta_optimiser = torch.optim.Adam(meta_model.parameters(), lr=args.meta_lr)
 loss_fn = nn.CrossEntropyLoss().to(device)
 
@@ -93,7 +93,7 @@ def prepare_meta_batch(n, k, q, meta_batch_size):
         # evaluate the fast model on and generate meta-gradients
         x = x.reshape(meta_batch_size, n*k + q*k, num_input_channels, x.shape[-2], x.shape[-1])
         # Move to device
-        x = x.double().to(device)
+        x = x.to(device)
         # Create label
         y = create_nshot_task_label(k, q).cuda().repeat(meta_batch_size)
         return x, y

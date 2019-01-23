@@ -129,6 +129,6 @@ def matching_net_predictions(attention: torch.Tensor, n: int, k: int, q: int) ->
     y = create_nshot_task_label(k, n).unsqueeze(-1)
     y_onehot = y_onehot.scatter(1, y, 1)
 
-    y_pred = torch.mm(attention, y_onehot.cuda().double())
+    y_pred = torch.mm(attention, y_onehot.cuda().float())
 
     return y_pred
