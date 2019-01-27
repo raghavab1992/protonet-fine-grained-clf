@@ -51,8 +51,7 @@ class ExtModelProtoNetClf(object):
 
     def get_embeddings(self, dl, visualize=False):
         """Get embeddings for all samples available in dataloader."""
-        gts = []
-        cur = 0
+        gts, cur = [], 0
         with torch.no_grad():
             for batch_index, (X, y_gt) in tqdm(enumerate(dl), total=len(dl)):
                 dev_X, y_gt = X.to(self.device), list(y_gt.numpy())
@@ -95,13 +94,14 @@ class ExtModelProtoNetClf(object):
             if i < repeat - 1:
                 embs, gts = self.get_embeddings(support_set_dl)  # no visualization
 
-    def predict_embeddings(self, X_embs):
+    def predict_embeddings(self, X_embs, softmax=True):
         preds = np.zeros((len(X_embs), self.n_classes))
         proto_embs = [p.mean() for p in self.prototypes]
         for idx_sample, x in tqdm(enumerate(X_embs), total=len(X_embs)):
             for idx_class, proto in enumerate(proto_embs):
-                preds[idx_sample, idx_class] = -np.log(np.sum((x - proto)**2))
-            preds[idx_sample, :] = np_softmax(preds[idx_sample])
+                preds[idx_sample, idx_class] = -np.log(np.sum((x - proto)**2) + 1e-300) # preventing log(0)
+            if softmax:
+                preds[idx_sample, :] = np_softmax(preds[idx_sample])
         return preds
 
     def predict(self, data_loader):
