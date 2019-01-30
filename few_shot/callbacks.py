@@ -156,6 +156,7 @@ class ProgressBarLogger(Callback):
         self.num_batches = self.params['num_batches']
         self.verbose = self.params['verbose']
         self.metrics = ['loss'] + self.params['metrics']
+        self.epoch_metrics = self.params['epoch_metrics']
 
     def on_epoch_begin(self, epoch, logs=None):
         self.target = self.num_batches
@@ -182,7 +183,7 @@ class ProgressBarLogger(Callback):
     def on_epoch_end(self, epoch, logs=None):
         # Update log values
         self.log_values = {}
-        for k in self.metrics:
+        for k in self.metrics + self.epoch_metrics:
             if k in logs:
                 self.log_values[k] = logs[k]
 

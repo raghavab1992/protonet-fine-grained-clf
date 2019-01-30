@@ -54,7 +54,8 @@ def batch_metrics(model: Module, y_pred: torch.Tensor, y: torch.Tensor, metrics:
 
 
 def fit(model: Module, optimiser: Optimizer, loss_fn: Callable, epochs: int, dataloader: DataLoader,
-        prepare_batch: Callable, metrics: List[Union[str, Callable]] = None, callbacks: List[Callback] = None,
+        prepare_batch: Callable, metrics: List[Union[str, Callable]] = None,
+        epoch_metrics: List[str] = None, callbacks: List[Callback] = None,
         verbose: bool =True, fit_function: Callable = gradient_step, fit_function_kwargs: dict = {}):
     """Function to abstract away training loop.
 
@@ -70,6 +71,7 @@ def fit(model: Module, optimiser: Optimizer, loss_fn: Callable, epochs: int, dat
         dataloader: `torch.DataLoader` instance to fit the model to
         prepare_batch: Callable to perform any desired preprocessing
         metrics: Optional list of metrics to evaluate the model with
+        epoch_metrics: Optional list of metrics on top of metrics at the end of epoch
         callbacks: Additional functionality to incorporate into training such as logging metrics to csv, model
             checkpointing, learning rate scheduling etc... See voicemap.callbacks for more.
         verbose: All print output is muted if this argument is `False`
@@ -89,6 +91,7 @@ def fit(model: Module, optimiser: Optimizer, loss_fn: Callable, epochs: int, dat
         'batch_size': batch_size,
         'verbose': verbose,
         'metrics': (metrics or []),
+        'epoch_metrics': (epoch_metrics or []),
         'prepare_batch': prepare_batch,
         'loss_fn': loss_fn,
         'optimiser': optimiser
