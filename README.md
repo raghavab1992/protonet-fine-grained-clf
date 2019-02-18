@@ -1,201 +1,63 @@
-# Prototypical networks test
+# (Using) Prototypical Networks as a Fine Grained Classifier
 
-What if we use ImageNet pretrained model as base embedding model?
+This repository is heavily based on [Oscar Knagg](https://towardsdatascience.com/@oknagg)'s few-shot learning
+implementation [github.com/oscarknagg/few-shot](https://github.com/oscarknagg/few-shot), focused on applying simple but strong [Prototpyical Networks](https://arxiv.org/pdf/1703.05175.pdf) to fine grained classification task.
 
-Here's tested.
+Unlike very clean original implementation, this repository contains
+some dirty code to quickly present sample solution to a Kaggle competition
+"[Humpback Whale Identification](https://www.kaggle.com/c/humpback-whale-identification/)".
 
-* Depending on one additional module: dl-cliche.
+Some of competition submission code borrows functions from [Radek Osmulski](https://medium.com/@radekosmulski)'s github repository. Thank you.
 
-- - -
-Original readme document.
+I'd like to express sincere appreciation to both [Oscar Knagg](https://towardsdatascience.com/@oknagg) and [Radek Osmulski](https://medium.com/@radekosmulski).
 
-# Few-shot learning
+![fig](assets/proto_nets_diagram.png)
 
-The aim for this repository is to contain clean, readable and tested
-code to reproduce few-shot learning research.
+Figure from original paper. Color circles: training samples, $c_i$: prototypes, $x$: test sample.
 
-This project is written in python 3.6 and Pytorch and assumes you have
-a GPU.
+## Quick start
 
-See these Medium articles for some more information
-1. [Theory and concepts](https://towardsdatascience.com/advances-in-few-shot-learning-a-guided-tour-36bc10a68b77)
-2. [Discussion of implementation details](https://towardsdatascience.com/advances-in-few-shot-learning-reproducing-results-in-pytorch-aba70dee541d)
+This project derives prerequisite below:
 
-# Setup
-### Requirements
+    This project is written in python 3.6 and Pytorch and assumes you have
+    a GPU.
 
-Listed in `requirements.txt`. Install with `pip install -r
-requirements.txt` preferably in a virtualenv.
+1. Install dl-cliche, excuse me this is my almost-private library to repeat cliche code.
 
-### Data
-Edit the `DATA_PATH` variable in `config.py` to the location where
-you store the Omniglot and miniImagenet datasets.
+    pip install git+https://github.com/daisukelab/dl-cliche.git@master --upgrade
 
-After acquiring the
-data and running the setup scripts your folder structure should look
-like
-```
-DATA_PATH/
-    Omniglot/
-        images_background/
-        images_evaluation/
-    miniImageNet/
-        images_background/
-        images_evaluation/
-```
+2. Install [albumentations](https://github.com/albu/albumentations/).
+3. Edit the `DATA_PATH` variable in `config.py` to the location where
+you downloaded dataset copy from Kaggle.
+4. Open and run `app/whale/Example_Humpback_Whale_Identification.ipynb`.
 
-**Omniglot** dataset. Download from https://github.com/brendenlake/omniglot/tree/master/python,
-place the extracted files into `DATA_PATH/Omniglot_Raw` and run
-`scripts/prepare_omniglot.py`
+## Benefits and drawbacks
 
-**miniImageNet** dataset. Download files from
-https://drive.google.com/file/d/0B3Irx3uQNoBMQ1FlNXJsZUdYWEE/view,
-place in `data/miniImageNet/images` and run `scripts/prepare_mini_imagenet.py`
+- Very simple design for both networks and training algorithm.
+- All non-linearity can be learned by the model.
+- Independent from model design, we can choose arbitrary networks best fit to the problem.
+- Embeddings produced by the learnt model are simple data points in multi-dimensional Euclidean space where distances between data points are quite simply calculated.
+- Training is easier comparing to Siamese networks for example.
+- Less sensitive to class imbalance, training algorithm always picks equal number of samples from k-classes.
+- Test time augmentation can be naturally applied for both getting prototypes and test samples' embeddings.
 
-### Tests (optional)
+But
 
-After adding the datasets run `pytest` in the root directory to run
-all tests.
+- Number of classes ProtoNets can train is mainly limited by memory size. Single GTX1080Ti can handle up to 20 classes for 1 shot for example.
+- As far as I have tried, more k-way (k-classes) results in better performance, and it is limited by memory as written above.
 
-# Results
+## Towards better performance
 
-The file `experiments/experiments.txt` contains the hyperparameters I
-used to obtain the results given below.
+- Augmentation matters.
+- Image size also matters.
+- TTA pushes score.
+- and more...
 
-### Prototypical Networks
+## Resources
 
-![Prototypical Networks](https://github.com/oscarknagg/few-shot/blob/master/assets/proto_nets_diagram.png)
-
-
-Run `experiments/proto_nets.py` to reproduce results from [Prototpyical
-Networks for Few-shot Learning](https://arxiv.org/pdf/1703.05175.pdf)
+- Original paper: [Prototpyical Networks for Few-shot Learning](https://arxiv.org/pdf/1703.05175.pdf)
 (Snell et al).
-
-**Arguments**
-- dataset: {'omniglot', 'miniImageNet'}. Whether to use the Omniglot
-    or miniImagenet dataset
-- distance: {'l2', 'cosine'}. Which distance metric to use
-- n-train: Support samples per class for training tasks
-- n-test: Support samples per class for validation tasks
-- k-train: Number of classes in training tasks
-- k-test: Number of classes in validation tasks
-- q-train: Query samples per class for training tasks
-- q-test: Query samples per class for validation tasks
-
-
-|                  | Omniglot |     |      |      |
-|------------------|----------|-----|------|------|
-| **k-way**        | **5**    |**5**|**20**|**20**|
-| **n-shot**       | **1**    |**5**|**1** |**5** |
-| Published        | 98.8     |99.7 |96.0  |98.9  |
-| This Repo        | 98.2     |99.4 |95.8  |98.6  |
-
-|                  | miniImageNet|     |
-|------------------|-------------|-----|
-| **k-way**        | **5**       |**5**|
-| **n-shot**       | **1**       |**5**|
-| Published        | 49.4        |68.2 |
-| This Repo        | 48.0        |66.2 |
-
-### Matching Networks
-
-A differentiable nearest neighbours classifier.
-
-![Matching Networks](https://github.com/oscarknagg/few-shot/blob/master/assets/matching_nets_diagram.png)
-
-Run `experiments/matching_nets.py` to reproduce results from [Matching
-Networks for One Shot Learning](https://arxiv.org/pdf/1606.04080.pdf)
-(Vinyals et al).
-
-**Arguments**
-- dataset: {'omniglot', 'miniImageNet'}. Whether to use the Omniglot
-    or miniImagenet dataset
-- distance: {'l2', 'cosine'}. Which distance metric to use
-- n-train: Support samples per class for training tasks
-- n-test: Support samples per class for validation tasks
-- k-train: Number of classes in training tasks
-- k-test: Number of classes in validation tasks
-- q-train: Query samples per class for training tasks
-- q-test: Query samples per class for validation tasks
-- fce: Whether (True) or not (False) to use full context embeddings (FCE)
-- lstm-layers: Number of LSTM layers to use in the support set
-    FCE
-- unrolling-steps: Number of unrolling steps to use when calculating FCE
-    of the query sample
-
-I had trouble reproducing the results of this paper using the cosine
-distance metric as I found the converge to be slow and final performance
-dependent on the random initialisation. However I was able to reproduce
-(and slightly exceed) the results of this paper using the l2 distance
-metric.
-
-|                     | Omniglot|     |      |      |
-|---------------------|---------|-----|------|------|
-| **k-way**           | **5**   |**5**|**20**|**20**|
-| **n-shot**          | **1**   |**5**|**1** |**5** |
-| Published (cosine)  | 98.1    |98.9 |93.8  |98.5  |
-| This Repo (cosine)  | 92.0    |93.2 |75.6  |77.8  |
-| This Repo (l2)      | 98.3    |99.8 |92.8  |97.8   |
-
-|                        | miniImageNet|     |
-|------------------------|-------------|-----|
-| **k-way**              | **5**       |**5**|
-| **n-shot**             | **1**       |**5**|
-| Published (cosine, FCE)| 44.2        |57.0 |
-| This Repo (cosine, FCE)| 42.8        |53.6 |
-| This Repo (l2)         | 46.0        |58.4 |
-
-### Model-Agnostic Meta-Learning (MAML)
-
-![MAML](https://github.com/oscarknagg/few-shot/blob/master/assets/maml_diagram.png)
-
-I used max pooling instead of strided convolutions in order to be
-consistent with the other papers. The miniImageNet experiments using
-2nd order MAML took me over a day to run.
-
-Run `experiments/maml.py` to reproduce results from [Model-Agnostic
-Meta-Learning](https://arxiv.org/pdf/1703.03400.pdf)
-(Finn et al).
-
-**Arguments**
-- dataset: {'omniglot', 'miniImageNet'}. Whether to use the Omniglot
-    or miniImagenet dataset
-- distance: {'l2', 'cosine'}. Which distance metric to use
-- n: Support samples per class for few-shot tasks
-- k: Number of classes in training tasks
-- q: Query samples per class for training tasks
-- inner-train-steps: Number of inner-loop updates to perform on training
-    tasks
-- inner-val-steps: Number of inner-loop updates to perform on validation
-    tasks
-- inner-lr: Learning rate to use for inner-loop updates
-- meta-lr: Learning rate to use when updating the meta-learner weights
-- meta-batch-size: Number of tasks per meta-batch
-- order: Whether to use 1st or 2nd order MAML
-- epochs: Number of training epochs
-- epoch-len: Meta-batches per epoch
-- eval-batches: Number of meta-batches to use when evaluating the model
-    after each epoch
-
-
-NB: For MAML n, k and q are fixed between train and test. You may need
-to adjust meta-batch-size to fit your GPU. 2nd order MAML uses a _lot_
-more memory.
-
-|                  | Omniglot |     |      |      |
-|------------------|----------|-----|------|------|
-| **k-way**        | **5**    |**5**|**20**|**20**|
-| **n-shot**       | **1**    |**5**|**1** |**5** |
-| Published        | 98.7     |99.9 |95.8  |98.9  |
-| This Repo (1)    | 95.5     |99.5 |92.2  |97.7  |
-| This Repo (2)    | 98.1     |99.8 |91.6  |95.9  |
-
-|                  | miniImageNet|     |
-|------------------|-------------|-----|
-| **k-way**        | **5**       |**5**|
-| **n-shot**       | **1**       |**5**|
-| Published        | 48.1        |63.2 |
-| This Repo (1)    | 46.4        |63.3 |
-| This Repo (2)    | 47.5        |64.7 |
-
-Number in brackets indicates 1st or 2nd order MAML.
+- [Oscar Knagg](https://towardsdatascience.com/@oknagg)'s article: [Theory and concepts](https://towardsdatascience.com/advances-in-few-shot-learning-a-guided-tour-36bc10a68b77)
+- [Oscar Knagg](https://towardsdatascience.com/@oknagg)'s article: [Discussion of implementation details](https://towardsdatascience.com/advances-in-few-shot-learning-reproducing-results-in-pytorch-aba70dee541d)
+- [Radek Osmulski](https://www.kaggle.com/radek1)'s post on Kaggle discussion: [[LB 0.760] Fastai Starter Pack](https://www.kaggle.com/c/humpback-whale-identification/discussion/74647)
+- [Radek Osmulski](https://medium.com/@radekosmulski)'s github repository: [Humpback Whale Identification Competition Starter Pack](https://github.com/radekosmulski/whale)
