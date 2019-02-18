@@ -1,11 +1,18 @@
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+from torchvision import models
+from torch import nn
 
-from few_shot.models import get_few_shot_encoder
+from few_shot.models import get_few_shot_encoder, Flatten
 from few_shot.core import NShotTaskSampler, EvaluateFewShot, prepare_nshot_task
 from few_shot.proto import proto_net_episode
 from few_shot.train import fit
 from few_shot.callbacks import *
+
+from dlcliche.utils import *
+
+assert torch.cuda.is_available()
+device = torch.device('cuda')
 
 
 def show_normalized_image(img, ax=None, mono=False):
@@ -72,8 +79,6 @@ def train_proto_net(args, model, device, n_epochs,
                     evaluation_episodes=100,
                     episodes_per_epoch=100,
                    ):
-    print(f'Training Prototypical network...')
-
     # Prepare model
     model.to(device, dtype=torch.float)
     model.train(True)
@@ -108,7 +113,6 @@ def train_proto_net(args, model, device, n_epochs,
         ),
         LearningRateScheduler(schedule=lr_schedule),
         CSVLogger(path + f'/logs/{args.param_str}.csv'),
-        background_taskloader.batch_sampler.callback,
     ]
 
     fit(

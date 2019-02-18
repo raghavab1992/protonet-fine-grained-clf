@@ -34,27 +34,27 @@ class ExtModelProtoNetClf(object):
     TODO Fix bad design for member-call-order dependency...
     """
 
-    def __init__(self, model, device=None):
-        model.eval()
+    def __init__(self, model, classes, device):
         model.to(device)
+        model.eval()
         self.model = model
+        self.classes = classes
         self.device = device
         self.prototypes = None
         self.n_embeddings = None  # First get_embeddings() will set this
-        self.n_classes = None     # First make_prototypes() will set this
+        self.n_classes = len(classes)
         self.log = get_logger()
 
-    def _make_null_prototypes(self, n_classes):
-        self.n_classes = n_classes
+    def _make_null_prototypes(self):
         self.prototypes = [OnlineStats(self.n_embeddings) \
-                           for _ in range(n_classes)]
+                           for _ in range(self.n_classes)]
 
     def get_embeddings(self, dl, visualize=False):
         """Get embeddings for all samples available in dataloader."""
         gts, cur = [], 0
         with torch.no_grad():
             for batch_index, (X, y_gt) in tqdm(enumerate(dl), total=len(dl)):
-                dev_X, y_gt = X.to(self.device), list(y_gt.numpy())
+                dev_X, y_gt = X.to(self.device), list(y_gt)
                 this_embs = self.model(dev_X).cpu().detach().numpy()
                 if cur == 0:
                     self.n_embeddings = this_embs.shape[-1]
@@ -86,10 +86,12 @@ class ExtModelProtoNetClf(object):
             self.log.info('Using current prototypes.')
         else:
             self.log.info('Making new prototypes.')
-            self._make_null_prototypes(len(support_set_dl.dataset.classes))
+            self._make_null_prototypes()
         # Update prototypes (just by feeding to online stat class)
         for i in range(repeat):
             for emb, cls in zip(embs, gts):
+                if not isinstance(cls, int):
+                    cls = self.classes.index(cls)
                 self.prototypes[cls].put(emb)
             if i < repeat - 1:
                 embs, gts = self.get_embeddings(support_set_dl)  # no visualization
