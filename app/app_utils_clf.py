@@ -9,7 +9,7 @@ from few_shot.proto import proto_net_episode
 from few_shot.train import fit
 from few_shot.callbacks import *
 
-from dlcliche.utils import *
+from dlcliche.image import *
 
 assert torch.cuda.is_available()
 device = torch.device('cuda')

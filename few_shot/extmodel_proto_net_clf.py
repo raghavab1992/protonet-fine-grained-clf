@@ -96,7 +96,7 @@ class ExtModelProtoNetClf(object):
             if i < repeat - 1:
                 embs, gts = self.get_embeddings(support_set_dl)  # no visualization
 
-    def predict_embeddings(self, X_embs, softmax=True):
+    def predict_embeddings(self, X_embs, softmax=True, normalized_softmax=True):
         preds = np.zeros((len(X_embs), self.n_classes))
         proto_embs = [p.mean() for p in self.prototypes]
         for idx_sample, x in tqdm(enumerate(X_embs), total=len(X_embs)):
@@ -104,8 +104,11 @@ class ExtModelProtoNetClf(object):
                 # FIXED on Feb-24: preds[idx_sample, idx_class] = -np.log(np.sum((x - proto)**2) + 1e-300) # preventing log(0)
                 # No log should be applied -> All distances sould be 0 or minus values. Taking log() have broken this.
                 preds[idx_sample, idx_class] = -np.sum((x - proto)**2)
-            if softmax:
-                preds[idx_sample, :] = np_softmax(preds[idx_sample])
+        if softmax:
+            # FIXED on Feb-25: Softmax could be very hard unless distance is normalized
+            if normalized_softmax:
+                preds /= np.max([1.0, np.abs(preds.mean())])
+            preds = np_softmax(preds)
         return preds
 
     def predict(self, data_loader):
