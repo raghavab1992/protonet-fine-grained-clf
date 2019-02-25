@@ -11,11 +11,50 @@ import albumentations as A
 sys.path.append('..') # app
 sys.path.append('../..') # root
 from few_shot.extmodel_proto_net_clf import ExtModelProtoNetClf
+from config import DATA_PATH
 from app_utils_clf import *
 
 
 def get_test_images(data_test):
     return sorted([str(f).replace(data_test+'/', '') for f in Path(data_test).glob('*.jpg')])
+
+
+def get_training_data_lists(sampling_type='more_than_two', train_csv=DATA_PATH+'/train.csv'):
+    """Get lists of training data for train/valid images/labels according to sampling type."""
+    df = pd.read_csv(train_csv)
+
+    if sampling_type == 'more_than_two':
+        df = df[df.Id != 'new_whale']
+        ids = df.Id.values
+        classes = sorted(list(set(ids)))
+        images = df.Image.values
+        all_cls2imgs = {cls:images[ids == cls] for cls in classes}
+
+        trn_images = [image for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) >= 2]
+        trn_labels = [_id   for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) >= 2]
+        val_images = [image for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) == 2]
+        val_labels = [_id   for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) == 2]
+    elif sampling_type == 'exhaustive':
+        # Assign fake Id to new_whale
+        n_new_whale = len(df[df.Id == 'new_whale'])
+        df.at[df.Id == 'new_whale', 'Id'] = [f'new{i:05d}' for i in range(n_new_whale)]
+
+        ids = df.Id.values
+        classes = sorted(list(set(ids)))
+        images = df.Image.values
+        all_cls2imgs = {cls:images[ids == cls] for cls in classes}
+
+        # Duplicate all the single image classes
+        single_images = [image for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) == 1]
+        single_labels = [_id   for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) == 1]
+
+        trn_images = list(images) + single_images
+        trn_labels = list(ids) + single_labels
+        val_images = [image for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) > 2]
+        val_labels = [_id   for image, _id in zip(images, ids) if len(all_cls2imgs[_id]) > 2]
+    else:
+        raise ValueError('unknown sampling_type option')
+    return trn_images, trn_labels, val_images, val_labels
 
 
 def get_aug(re_size=224, to_size=224, train=True):

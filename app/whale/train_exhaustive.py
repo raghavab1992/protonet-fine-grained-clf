@@ -34,7 +34,7 @@ args.checkpoint_period = 50
 print(f'Training {args.param_str}.')
 
 # Data - 'more_than_two' or 'exhaustive'
-trn_images, trn_labels, val_images, val_labels = get_training_data_lists('more_than_two')
+trn_images, trn_labels, val_images, val_labels = get_training_data_lists('exhaustive')
 
 args.episodes_per_epoch = len(trn_images) // args.k_train + 1
 args.evaluation_episodes = 100 # setting small value, anyway validation set is almost useless here
