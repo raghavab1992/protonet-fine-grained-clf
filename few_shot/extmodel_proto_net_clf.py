@@ -34,20 +34,23 @@ class ExtModelProtoNetClf(object):
     TODO Fix bad design for member-call-order dependency...
     """
 
-    def __init__(self, model, classes, device):
+    def __init__(self, model, classes, device, n_embeddings=None):
         model.to(device)
         model.eval()
         self.model = model
         self.classes = classes
         self.device = device
-        self.prototypes = None
-        self.n_embeddings = None  # First get_embeddings() will set this
+        self.n_embeddings = n_embeddings # First get_embeddings() will set this, if it is None
         self.n_classes = len(classes)
+        self._make_null_prototypes()
         self.log = get_logger()
 
     def _make_null_prototypes(self):
-        self.prototypes = [OnlineStats(self.n_embeddings) \
-                           for _ in range(self.n_classes)]
+        if self.n_embeddings:
+            self.prototypes = [OnlineStats(self.n_embeddings) \
+                               for _ in range(self.n_classes)]
+        else:
+            self.prototypes = None
 
     def get_embeddings(self, dl, visualize=False):
         """Get embeddings for all samples available in dataloader."""
@@ -96,16 +99,24 @@ class ExtModelProtoNetClf(object):
             if i < repeat - 1:
                 embs, gts = self.get_embeddings(support_set_dl)  # no visualization
 
+    def get_prototypes(self):
+        return np.array([p.mean() for p in self.prototypes])
+
+    def save_prototypes(self, filename):
+        np.save(filename, self.get_prototypes())
+
+    def load_prototypes(self, filename):
+        prototypes = np.load(filename)
+        for i, prototype in enumerate(prototypes):
+            self.prototypes[i].set_mean(prototype)
+
     def predict_embeddings(self, X_embs, softmax=True, normalized_softmax=True):
         preds = np.zeros((len(X_embs), self.n_classes))
         proto_embs = [p.mean() for p in self.prototypes]
         for idx_sample, x in tqdm(enumerate(X_embs), total=len(X_embs)):
             for idx_class, proto in enumerate(proto_embs):
-                # FIXED on Feb-24: preds[idx_sample, idx_class] = -np.log(np.sum((x - proto)**2) + 1e-300) # preventing log(0)
-                # No log should be applied -> All distances sould be 0 or minus values. Taking log() have broken this.
-                preds[idx_sample, idx_class] = -np.sum((x - proto)**2)
+                preds[idx_sample, idx_class] = -(np.linalg.norm(x - proto)**2)
         if softmax:
-            # FIXED on Feb-25: Softmax could be very hard unless distance is normalized
             if normalized_softmax:
                 preds /= np.max([1.0, np.abs(preds.mean())])
             preds = np_softmax(preds)
@@ -118,3 +129,10 @@ class ExtModelProtoNetClf(object):
     def evaluate(self, data_loader):
         y_hat, y_gts = self.predict(data_loader)
         return calculate_clf_metrics(y_gts, y_hat)
+
+    @staticmethod
+    def get_uncertainty(dists):
+        _max = np.max(dists, axis=-1)
+        _mean = np.mean(dists, axis=-1)
+        uncertainty = _max/_mean
+        return uncertainty
