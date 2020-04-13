@@ -1,3 +1,7 @@
+
+app/whale/logs/*
+app/whale/models/*
+app/whale/results/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
